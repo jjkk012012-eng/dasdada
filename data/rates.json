@@ -1,1 +1,1 @@
-{"note":"GitHub Pages safe small rate file. The main defaults are embedded in app.js so STEP reading does not depend on large data."}
+{"version":"stable-small","note":"단가 기본값은 app.js에 포함. 이 파일은 GitHub Pages용 소형 데이터입니다."}
