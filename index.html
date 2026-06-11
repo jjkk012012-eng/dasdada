@@ -1,105 +1,83 @@
 <!doctype html>
 <html lang="ko">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>공장용 STEP 견적 계산기</title>
   <link rel="stylesheet" href="styles.css" />
-  <script src="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/three@0.160.0/examples/js/controls/OrbitControls.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/occt-import-js@0.0.23/dist/occt-import-js.js"></script>
 </head>
 <body>
   <header class="topbar">
     <div>
       <h1>공장용 STEP 견적 계산기</h1>
-      <p>OCCT로 STEP/STP 실제 형상을 읽고, 어셈블리 컨테이너는 제외한 뒤 말단 파트만 견적합니다.</p>
+      <p>STEP/STP 파일에서 어셈블리 구조를 읽고, 말단 파트만 견적 대상으로 정리합니다.</p>
     </div>
     <div class="badge">플랫폼 수수료 0원</div>
   </header>
 
-  <main class="layout">
-    <section class="workspace">
-      <div id="dropzone" class="dropzone">
-        <input id="fileInput" type="file" accept=".step,.stp" />
+  <main class="page">
+    <section class="panel main-panel">
+      <div id="dropZone" class="drop-zone">
         <strong>STEP/STP 파일 업로드</strong>
-        <span>파일 선택 또는 드래그 앤 드롭</span>
-        <small id="loadState">실제 OCCT 파싱 전에는 임의 견적을 만들지 않습니다.</small>
+        <span>클릭하거나 파일을 끌어다 놓으세요</span>
+        <input id="fileInput" type="file" accept=".step,.stp,.STEP,.STP" />
       </div>
 
-      <div class="summary-grid">
-        <div class="metric"><b id="partCount">0</b><span>말단 파트</span></div>
-        <div class="metric"><b id="asmCount">0</b><span>제외 어셈블리</span></div>
-        <div class="metric"><b id="totalQuote">0원</b><span>고객 제출가</span></div>
-        <div class="metric"><b id="parseStatus">대기</b><span>분석 상태</span></div>
+      <div class="status-grid">
+        <div class="stat"><b id="statLeaf">0</b><span>말단 파트</span></div>
+        <div class="stat"><b id="statAssembly">0</b><span>어셈블리 제외</span></div>
+        <div class="stat"><b id="statTotal">0원</b><span>고객 제출가</span></div>
+        <div class="stat"><b id="statParse">대기</b><span>분석 상태</span></div>
       </div>
 
-      <div class="notice">
-        절곡 자동값은 <b>같은 두께 판재 + 실제 곡면/R 후보</b>가 있을 때만 넣습니다. 확실하지 않으면 0회로 두고 공장이 직접 수정합니다.
+      <div id="warning" class="notice">
+        어셈블리/서브어셈블리는 견적 대상에서 제외하고, 실제 하위 부품이 없는 말단 파트만 표에 표시합니다.
       </div>
 
-      <div class="viewer-panel">
-        <div class="viewer-head">
-          <div>
-            <h2>3D 뷰어</h2>
-            <p id="viewerLabel">파트를 선택하면 실제 mesh만 표시합니다.</p>
-          </div>
-          <div class="viewer-actions">
-            <button id="showAllBtn" type="button">전체 보기</button>
-            <button id="fitBtn" type="button">화면 맞춤</button>
-          </div>
-        </div>
-        <div id="viewer"></div>
+      <div class="toolbar">
+        <button id="applyAl">선택 재질 일괄 AL6061</button>
+        <button id="applySus">선택 재질 일괄 SUS304</button>
+        <button id="recalcBtn">전체 재계산</button>
+        <button id="csvBtn">CSV 내보내기</button>
       </div>
 
-      <section class="table-panel">
-        <div class="table-head">
-          <h2>말단 파트 견적표</h2>
-          <div class="tools">
-            <button id="recalcBtn" type="button">전체 재계산</button>
-            <button id="exportBtn" type="button">CSV 내보내기</button>
-          </div>
-        </div>
-        <div class="table-wrap">
-          <table id="partsTable">
-            <thead>
-              <tr>
-                <th>파트명</th>
-                <th>수량</th>
-                <th>추천</th>
-                <th>공법</th>
-                <th>재질</th>
-                <th>두께</th>
-                <th>탭</th>
-                <th>절곡</th>
-                <th>마진%</th>
-                <th>견적가</th>
-              </tr>
-            </thead>
-            <tbody id="partsBody">
-              <tr><td colspan="10" class="empty">STEP 파일을 업로드하세요.</td></tr>
-            </tbody>
-          </table>
-        </div>
-      </section>
+      <div class="table-wrap">
+        <table id="partsTable">
+          <thead>
+            <tr>
+              <th><input id="checkAll" type="checkbox" /></th>
+              <th>파트명</th>
+              <th>수량</th>
+              <th>자동추천</th>
+              <th>공법</th>
+              <th>재질</th>
+              <th>두께/규격</th>
+              <th>탭</th>
+              <th>절곡</th>
+              <th>마진%</th>
+              <th>견적가</th>
+            </tr>
+          </thead>
+          <tbody id="partsBody">
+            <tr><td colspan="11" class="empty">STEP 파일을 업로드하면 말단 파트가 표시됩니다.</td></tr>
+          </tbody>
+        </table>
+      </div>
     </section>
 
-    <aside class="side">
-      <section class="card selected-card">
+    <aside class="panel side-panel">
+      <section class="preview-card">
         <h2>선택 파트 검토</h2>
-        <div id="selectedInfo" class="selected-info">파트를 선택하세요.</div>
+        <div id="partPreview" class="part-preview">
+          <div class="mock-shape"></div>
+        </div>
+        <div id="partDetail" class="detail">파트를 선택하세요.</div>
       </section>
 
-      <section class="card">
+      <section class="rates-card">
         <h2>우리 공장 단가표</h2>
-        <div class="rate-block">
-          <h3>공법별 마진</h3>
-          <div id="marginEditor"></div>
-        </div>
-        <div class="rate-block">
-          <h3>재료 시세 + 할증</h3>
-          <div id="materialEditor"></div>
-        </div>
+        <p class="hint">시간 입력 없이 기본가/단위가/마진으로 계산합니다.</p>
+        <div id="ratesForm" class="rates-form"></div>
       </section>
     </aside>
   </main>
